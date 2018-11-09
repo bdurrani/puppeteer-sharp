@@ -32,8 +32,8 @@ namespace PuppeteerSharp
 
             _logger = LoggerFactory.CreateLogger<Connection>();
             Observable.FromEventPattern<MessageReceivedEventArgs>(
-                o => Transport.MessageReceived += o,
-                o => Transport.MessageReceived -= o
+                eventHandle => Transport.MessageReceived += eventHandle,
+                eventHandle => Transport.MessageReceived -= eventHandle
             )
             .Subscribe(m => _ = TransportMessageReceivedAsync(m.EventArgs));
 
