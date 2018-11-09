@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using PuppeteerSharp.Helpers;
@@ -66,11 +65,7 @@ namespace PuppeteerSharp
                 elementSelector: contextId => new BrowserContext(Connection, this, contextId));
 
             Connection.Closed += (object sender, EventArgs e) => Disconnected?.Invoke(this, new EventArgs());
-
-            Observable.FromEventPattern<MessageEventArgs>(
-                o => Connection.MessageReceived += o,
-                o => Connection.MessageReceived -= o
-            ).Subscribe(m => Observable.FromAsync(() => ConnectionMessageReceived(m.EventArgs)));
+            Connection.MessageReceived += Connect_MessageReceived;
 
             _chromiumProcess = chromiumProcess;
             _logger = Connection.LoggerFactory.CreateLogger<Browser>();
@@ -332,7 +327,7 @@ namespace PuppeteerSharp
             _contexts.Remove(contextId);
         }
 
-        private async Task ConnectionMessageReceived(MessageEventArgs e)
+        private async void Connect_MessageReceived(object sender, MessageEventArgs e)
         {
             switch (e.MessageID)
             {

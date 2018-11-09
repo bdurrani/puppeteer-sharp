@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -31,11 +31,11 @@ namespace PuppeteerSharp
             Transport = transport;
 
             _logger = LoggerFactory.CreateLogger<Connection>();
-
             Observable.FromEventPattern<MessageReceivedEventArgs>(
                 o => Transport.MessageReceived += o,
                 o => Transport.MessageReceived -= o
-            ).Subscribe(m => Observable.FromAsync(() => TransportMessageReceived(m.EventArgs)));
+            )
+            .Subscribe(m => _ = TransportMessageReceivedAsync(m.EventArgs));
 
             Transport.Closed += Transport_Closed;
             _callbacks = new ConcurrentDictionary<int, MessageTask>();
@@ -179,7 +179,8 @@ namespace PuppeteerSharp
         }
         #region Private Methods
 
-        private async Task TransportMessageReceived(MessageReceivedEventArgs e)
+
+        private async Task TransportMessageReceivedAsync(MessageReceivedEventArgs e)
         {
             var response = e.Message;
             JObject obj = null;
